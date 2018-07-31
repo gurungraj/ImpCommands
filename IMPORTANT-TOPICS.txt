@@ -1,0 +1,66 @@
+(1)			HOW TO RESET YOUR ROOT PASSWORD OF GITLAB:
+#gitlab-rails console production
+#user = User.where(id: 1).first
+#user.password = 'secret_pass'
+#user.password_confirmation = 'secret_pass'
+#user.save!
+
+
+(2)			RUN DRUSH FROM ANY DIRECTORY WITH SITE ALIASES:
+
+#drush cc all --root=/var/www/example
+#drush @ex cd all
+#vi ex.alias.drushrc.php
+   
+    <?php 
+    /**
+     * @file
+     * Site alias for example.com
+     */
+    $aliases['ex'] = array(
+      'root' => '/var/www/example',
+      'uri' => 'vm.example.com',
+    );
+
+
+(3)       HOW TO USE BASH $(AWK) IN SINGLE SSH-COMMAND?
+
+   # ssh myServer "uname -a | awk '{print \$2}' "
+
+
+(4)       USING OUTPUT OF AWK TO RUN COMMAND
+
+  # awk '{ system("openssl s_client -connect host:port -cipher " $1) }' ciphers.txt
+  # awk '{ system("mkdir " $1) }' ciphers.txt
+  
+
+(5)  How do I make Git ignore file mode (chmod) changes?
+
+      #git config core.fileMode false  
+      
+
+(6) Rsync over SSH with key authentication 
+    #rsync --progress -avz -e "ssh -i /home/dev/.ssh/andy-rsync-key" /home/dev/git-master/       
+
+(7) #/mnt/gluster/files/cascade/prod/mema.org/htdocs/sites/mera.org
+    #/mnt/gluster/files/cascade/prod/mema.org/htdocs/sites
+
+(8)
+    
+
+you have to set the username and the keyfile in the rsyncopts part of lsyncd.conf file (on ubuntu it is /etc/lsyncd/lsyncd.conf.lua). The keyfile must be present on the host where the lsyncd daemon is running.
+
+sync{
+  default.rsyncssh,
+  source="/path/to/source",
+  host="target.example.org",
+  targetdir="/path/on/target",
+  rsyncOpts={"-e", "/usr/bin/ssh -l someuser123 -i /home/someuser123/.ssh/id_rsa"}
+}
+
+(9) RSYNC from remote to local excluding folders:
+    #rsync -avr -e ssh user@host:/home/path/to/copy \
+                 /home/user/www --exclude='files_to_exclude/*'
+
+(10)                  
+

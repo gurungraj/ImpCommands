@@ -1,0 +1,144 @@
+(1)-XEN-TOPICS:
+console exit
+#Ctrl+] 
+
+(2)-Delete Rule by Chain and Number:
+#iptables -L --line-numbers
+#ptables -D <INPUT> 3 (Chain Rule: INPUT , FORWARD, PRE,POST)
+
+(3)-Flush a Single Chain
+#iptables -F INPUT
+iptables-save > iptables.txt`, removing the unwanted lines, and then applying the updated rules list via `iptables-restore < iptables.txt`.
+
+
+(4)-up route add -net <192.168.100.104 or 188.40.103.64> netmask <255.255.255.0 or 255.255.255.192> gw <192.168.100.1 or 188.40.103.65> eth0
+xen-create-image --hostname=testvm --ip=<your additional ip> --vcpus=<any> --memory=<any> --swap=<512Mb> --size=<any Gb> --arch=<i386 or amd64>
+up route add -net 192.168.100.104 netmask 255.255.255.0 gw 192.168.100.1 eth0
+#xen-create-image --hostname=couchbase--ip=192.168.122.50 --vcpus=1 --memory=1024Mb --swap=512Mb --size=10Gb --arch=amd64
+
+
+Highlighting search matches:
+:set hlsearch
+:set nohlsearch
+
+
+docker run -i -t -p 8080:80 mysite /bin/bash
+apachectl start
+
+MYSQL-TOPICS:
+mysqlcheck -uroot -p --optimize --databases myDatabase
+mysqladmin -u root -p -i 1 processlist
+mysqldump -u user -pupasswd my-database | gzip > one.gz > two.gz > three.gz
+$MYSQL -u$MYSQL_USER -p$MYSQL_PASSWORD -e "SHOW DATABASES;" | grep -Ev "(Database|information_schema)"
+
+Securely Transfer Files via rsync and SSH:
+rsync -avhe ssh user@server:/path/to/file /home/user/path/to/file
+rsync -avhPe "ssh -pPORTNUMBER" user@server:/path/to/file /home/user/path/to/file
+
+CHECK APACHE CONNECTIONS:
+netstat -tuna | grep :80 | grep SYN_RECV
+
+NOW=$(date +"%Y-%m-%d")
+
+COPY FOLDER&HIDDEN FILES :
+scp -pr 
+
+FIND TOPICS:
+(1)-HOW TO FIND PARTICULAR STRING"/var/www/html/abc.org" in /etc/apache2/sites-available and replcae abc.org to abc:
+#grep -lr -e "/var/www/html/abc.org" . | xargs sed -i "s/var\/www\/html\/abc.org/var\/www\/html\/abc/g"
+
+HOW TO FIND OLDER FILES AND THEN REMOVE:
+find /path/* -mtime +30 -exec rm {} \;
+
+HOW TO CHNAGE TIME IN UBUNTU:
+dpkg-reconfigure tzdata
+
+CHECKING USER CONNECTIVITY IN LDAP:
+#ldapsearch -LLL -x -h ldap.gailabs.com -D 'cn=admin,dc=ldap,dc=gailabs,dc=com' -b dc=ldap,dc=gailabs,dc=com -w gai123
+#ldapadd -x -W -h ldap.gailabs.com -D "cn=admin,dc=ldap,dc=gailabs,dc=com" -f user.ldif 
+
+JAILKIT USER:
+jk_jailuser -m -j /opt/jail/ robber
+
+HOW TO REMOVE EXITED DOCKER:
+docker ps -a | grep Exit | cut -d ' ' -f 1 | xargs docker rm
+
+CHECK DIRECTORY EXIST IN BASH SCRIPT:
+if [ ! -d /home/mlzboy/b2c2/shared/db ]; then
+  mkdir -p /home/mlzboy/b2c2/shared/db;
+fi
+
+CHANGING DATE STAMP IN UBUNTU:
+find bfc/. -exec touch -d "90 days ago" {} +
+
+SEARCH AND REPLACE WHOLE LINE USING sed:
+sed -i '/TEXT_TO_BE_REPLACED/c\This line is removed by the admin.' /tmp/foo
+sed 's/^aaa=.*/aaa=xxx/'
+cat text.txt | tr -s ' ' | cut -d ' ' -f4
+cat /etc/hosts|grep 172.0|awk '{print $4}'
+
+find DIRECTORY -exec touch -d "2 hours ago" {} +
+
+CURL ERROR undeined cur_inti():
+#apt-get install php5-curl
+
+SPACING IN BASH SCRIPT:
+echo -e "helloworld\n"
+
+WRITING IMAGE ON RPI:
+ddrescue -D --force ubuntu-mate-16.04-desktop-armhf-raspberry-pi.img /dev/sdc
+
+CRON NOT RUNNING FROM UI : DRUPAL
+add => extension=php_curl.so in /etc/php5/apache2/php.ini
+
+How do I sudo without having to enter my password?:
+#visudo -f /etc/sudoers.d/90-cloudimg-ubuntu
+michael ALL=NOPASSWD: ALL
+
+MYSQL-NON-ROOT USER CREATE DATABASE:
+#GRANT ALL PRIVILEGES ON `testuser\_%` .  * TO 'testuser'@'%';
+
+GIT-STATUS IN OTHER DIRECTORY:
+#git --git-dir /foo/bar/.git log
+
+HOW TO GET THE CURRENT GIT BRANCH:
+#git rev-parse --abbrev-ref HEAD
+
+SENDING MAIL FROM MUTT:
+#mail -A woxgo_analytics_extract.gz -s "Test Mail 3" rajesh.g@gai.co.in </tmp/1.txt 
+
+RSYNC OVER SSH ON NON-STANDAR PORT:
+# rsync -avz -e "ssh -p $portNumber" user@remoteip:/path/to/files/ /local/path/
+STANDARD-PORT:
+#rsync -avHe ssh user@server:/path/to/file /home/user/path/to/file
+
+RECONFIGURE DATE IN UBUNTU:
+#sudo dpkg-reconfigure tzdata
+SAMBA-SHARING:
+[<folder_name>]
+path = /home/<user_name>/<folder_name>
+valid users = <user_name>
+read only = no
+============================
+Connect to VM installer in XENSERVER USING VNC:
+# DOMID=`list_domains | grep $UUID | awk '{ print $1 }'`
+# xenstore-read /local/domain/$DOMID/console/vnc-port
+5901
+$ vncviewer -via root@XENSERVER_IP localhost:1
+==================================================
+
+AUTO-START AND STOP XEN GUEST:
+xe vm-param-set uuid=<vm uuid> other-config:auto_poweron=false <true>
++++++++++++++++++++++++++++++++++++++++++++++
+How do I change the screen resolution using Ubuntu command line?:
+#xrandr --output LVDS --mode 1024x768
+#xrandr -q
++++++++++++++++
+How to tar a directory preserving not only permissions, but ownership too:
+#tar -cvpf file.tar
+#tar --same-owner -xvf file.tar
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How to do backup with rsync and keep a copy of modified files?
+rsync -avzrb --progress --backup-dir=/tmp/old_dir/ --suffix=$(date +%F-%T) --update --times /tmp/source/ /tmp/target/
+

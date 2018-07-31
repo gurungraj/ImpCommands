@@ -1,0 +1,166 @@
+
+192.168.99.100 manager1 (Manager Machine)
+192.168.99.101 worker1
+192.168.99.102 worker2
+
+
+(A) Download the Docker Machine binary and extract it to your PATH
+
+		#curl -L https://github.com/docker/machine/releases/download/v0.13.0-rc1/docker-machine-`uname -s`-`uname -m` >/tmp/docker-machine &&
+		#chmod +x /tmp/docker-machine &&
+		#sudo cp /tmp/docker-machine /usr/local/bin/docker-machine
+
+(B) 
+		#docker swarm init
+		#docker swarm init --advertise-addr <MANAGER-IP>
+
+(C) Open a terminal and ssh into the machine where you want to run a worker node
+		#ssh user@worker1
+
+(D) Run the command produced by the docker swarm init output from the Create a swarm tutorial step to create a worker node joined to the   
+    existing swarm:
+ 		worker1$# docker swarm join --token  SWMTKN-1-49nj1cmql0jkz5s954yi3oex3nedyz0fb0xx14ie39trti4wxv-8vxv8rssmk743ojnwacrr2e7c 192.168.99.100:2377
+
+    This node joined a swarm as a worker1
+
+(E)  ssh into the 2nd machine (worker2) where you want to run a worker node
+        #ssh user@worker2
+
+(F)  Run the command produced by the docker swarm init output from the Create a swarm tutorial step to create a worker node joined to the   
+    existing swarm:
+ 		worker1$# docker swarm join --token  SWMTKN-1-49nj1cmql0jkz5s954yi3oex3nedyz0fb0xx14ie39trti4wxv-8vxv8rssmk743ojnwacrr2e7c 192.168.99.100:2377
+
+    This node joined a swarm as a worker2     
+
+(G) Open a terminal and ssh into the machine where the manager node runs and run the command to see the worker nodes:
+         #ssh user@manager1
+      ID                           HOSTNAME  STATUS  AVAILABILITY  MANAGER STATUS
+       03g1y59jwfg7cf99w4lt0f662    worker2   Ready   Active
+       9j68exjopxe7wfl6yuxml7a7j    worker1   Ready   Active
+       dxn1zf6l61qsb1josjja83ngz *  manager1  Ready   Active        Leader
+    
+    Swarm management commands like docker node ls only work on manager nodes
+
+(II) RUNNING SERVICES:
+
+(A)  Open a terminal and ssh into the machine where you run your manager node. For example, the tutorial uses a machine named manager1
+         #ssh user@manager1
+         #docker service create --name <name> -h <name> -p <host port>:<container port> -v <host volume>:<container volume> <image name>
+         e.g #docker service create --name webserver -h webserver -p 8100:80 -v /projects:/var/www/html rajesh/phptuned
+
+(B)  Run this command to see the list of running services: 
+          #docker service ls
+
+(III)  SCALE THE SERVICE IN THE SWARM
+         #docker service scale <SERVICE-ID>=<NUMBER-OF-TASKS>
+     e.g #docker service scale webserver=30 
+
+(IV)  DELETE THE SERVICE RUNNING ON THE SWARM:
+ (A)       open a terminal and ssh into the machine where you run your manager node
+         #docker service rm webserver
+         
+ (B)      To verify that the swarm manager removed the service 
+         #docker service inspect webserver
+          []
+          Error: no such service: webserver
+
+(V) DRAIN A NODE ON THE SWARM
+ (A)  open a terminal and ssh into the machine where you run your manager node 
+
+ (B)  Verify that all your nodes are actively available    
+       #docker node ls
+
+		ID                           HOSTNAME  STATUS  AVAILABILITY  MANAGER STATUS
+		1bcef6utixb0l0ca7gxuivsj0    worker2   Ready   Active
+		38ciaotwjuritcdtn9npbnkuz    worker1   Ready   Active
+		e216jshn25ckzbvmwlnh5jr3g *  manager1  Ready   Active        Leader
+
+ (c)  Drain a node that had a task assigned to it
+       #docker node update --availability drain worker1
+
+ (D)  To return the drained node to an active state
+       #docker node update --availability active worker1
+
+
+##################################################################################
+
+                          HOW TO INSTALL DOCKER COMPOSE ON UBUNTU 16.04
+
+
+
+(1) Run this command to download the latest version of Docker Compose:
+
+    #curl -L https://github.com/docker/compose/releases/download/1.17.0-rc1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+    #chmod +x /usr/local/bin/docker-compose
+
+(2) Running a Wordpress Container with Docker Compose:
+ 
+   create a directory for the YAML file and move into it:
+   #mkdir wordpress
+   #cd wordpress
+
+(3) create the YAML file:
+
+   #vi docker-compose.yml
+
+     version: '3'
+
+services:
+   db:
+     image: mysql:5.7
+     volumes:
+       - db_data:/var/lib/mysql
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: somewordpress
+       MYSQL_DATABASE: wordpress
+       MYSQL_USER: wordpress
+       MYSQL_PASSWORD: wordpress
+
+   wordpress:
+     depends_on:
+       - db
+     image: wordpress:latest
+     ports:
+       - "8000:80"
+     restart: always
+     environment:
+       WORDPRESS_DB_HOST: db:3306
+       WORDPRESS_DB_USER: wordpress
+       WORDPRESS_DB_PASSWORD: wordpress
+volumes:
+    db_data:
+
+(4) Build the project from your project directory
+    #docker-compose up -d     
+
+(5) Shutdown and cleanup
+
+    (a) Removes the containers and default network, but preserves your Wordpress database.
+        #docker-compose down
+
+    (b) Removes the containers, default network, and the Wordpress database
+        #docker-compose down --volumes
+
+##########################################################################################################
+
+                         INSTALL AND USE DOCKER ON UBUNTU
+(A)
+  #curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  #sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  #apt-get update
+  #apt-cache policy docker-ce
+  #apt-get install -y docker-ce
+  #systemctl status docker
+
+(B) Executing the Docker Command Without Sudo :
+   #usermod -aG docker ${USER}
+   #usermod -aG docker username
+
+(C) Committing Changes in a Container to a Docker Image:
+
+ (1)  To save the state of the container as a new image, first exit from it:
+      #exit
+
+ (2)     #docker commit -m "What did you do to the image" -a "Author Name" container-id repository/new_image_name    
+     e.g #docker commit -m "added node.js" -a "Sunday Ogwu-Chinuwa" d9b100f2f636 finid/ubuntu-nodejs

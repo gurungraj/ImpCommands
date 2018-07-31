@@ -1,0 +1,7 @@
+vi /etc/mysql/mysql.conf.d/mysqld.cnf 
+datadir=/mnt/volume-nyc1-01/mysql
+
+vi /etc/apparmor.d/tunables/alias
+alias /var/lib/mysql/ -> /mnt/volume-nyc1-01/mysql/,
+
+/etc/init.d/apparmor restart

@@ -1,0 +1,14 @@
+#----DOCKER DEVELOPERS----
+docker ps -a | grep Exit | cut -d ' ' -f1| xargs docker rm 
+docker run -d -p 8201:80 -v /opt/jail/home/keshav/projects:/var/www/html --name keshav -h keshav rajesh/phptuned
+docker run -d -p 8200:80 -v /opt/jail/home/arun/projects:/var/www/html --name arun -h arun rajesh/phptuned
+docker run -d -p 8202:80 -v /opt/jail/home/rajender/projects:/var/www/html --name rajender -h rajender rajesh/phptuned
+docker run -d -p 8203:80 -v /opt/jail/home/vidushi/projects:/var/www/html --name vidushi -h vidushi rajesh/phptuned
+docker run -d -p 8204:80 -v /opt/jail/home/bunty/projects:/var/www/html --name bunty -h bunty rajesh/phptuned
+docker run -d -p 8205:80 -v /opt/jail/home/brahm/projects:/var/www/html --name brahm -h brahm rajesh/phptuned
+#-----DOCKER MAINTENACE----
+docker run -d -p 8400:80 -v /opt/jail/home/fantopy/projects/alpha:/var/www/html --name alpha -h aplha rajesh/phptuned
+docker run -d -p 8402:80 -v /opt/jail/home/crea/projects/crea.org/dev:/var/www/html --name crea -h crea rajesh/phptuned
+docker run -d -p 8406:80 -v /opt/jail/home/hrm/projects/orangehrm-3.3.2:/var/www/site/orangehrm-3.3.2 --name hrm -h hrm gai/hrm
+docker run -d -p 8403:80 -v /opt/jail/home/care/projects/care.org/dev:/var/www/html --name care -h care rajesh/phptuned
+docker run -d -p 8404:80 -v /opt/jail/home/pfao/projects/pfaorissa:/var/www/html --name pfao -h pfao rajesh/phptuned

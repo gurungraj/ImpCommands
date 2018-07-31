@@ -1,0 +1,90 @@
+FROM ubuntu:14.04
+MAINTAINER rajesh.g@gai.co.in
+RUN apt-get update && \
+    apt-get install -y --force-yes \
+    software-properties-common \
+    python g++ make \
+            apache2 \
+        php5 \
+        php5-curl \
+        php5-gd \
+        php5-mcrypt \
+        php5-mysql \
+        php5-cli \
+        php5-common \
+        php5-readline \
+        php5-dev \
+        libapache2-mod-php5 \
+        php5-json \
+        lsyncd \
+        vim \            
+        curl \
+        git \
+        drush \
+        openssh-server \
+        lsyncd \
+        unzip \
+        wget \
+        ruby-dev \
+#        postfix \
+        mutt \
+        elinks \
+        ssmtp
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 4F4EA0AAE5267A6C
+#SASS Installation
+RUN add-apt-repository -y ppa:chris-lea/node.js && \
+    apt-get update && \
+    apt-get install -y python-software-properties python g++ make nodejs 
+#RUN npm install -g bower grunt-cli 
+#RUN gem install -y foundation \ 
+#    compass \ 
+#    sass
+ 
+
+RUN a2enmod \
+            php5 \
+            rewrite \
+            ssl
+RUN php5enmod \
+             mcrypt
+COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY default-ssl.conf /etc/apache2/sites-available/default-ssl.conf
+COPY sync-config.json /root/
+RUN sed -i 's/post_max_size = 8M/post_max_size = 200M/' /etc/php5/apache2/php.ini \
+    &&  sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 200M/' /etc/php5/apache2/php.ini \
+    && sed -i 's/max_file_uploads = 20/max_file_uploads = 200/' /etc/php5/apache2/php.ini \
+    && sed -i 's/expose_php = On/expose_php = Off/' /etc/php5/apache2/php.ini \
+    && sed -i 's/memory_limit = 128M/memory_limit = 512M/' /etc/php5/apache2/php.ini 
+RUN cd /tmp \
+    && wget https://packages.couchbase.com/releases/4.5.0/couchbase-server-enterprise_4.5.0-ubuntu14.04_amd64.deb \
+    && wget https://packages.couchbase.com/releases/couchbase-sync-gateway/1.0.0/couchbase-sync-gateway-community_1.0.0_x86_64.deb \
+    && wget http://packages.couchbase.com/releases/couchbase-release/couchbase-release-1.0-2-amd64.deb \
+    && dpkg -i couchbase-server-enterprise_4.5.0-ubuntu14.04_amd64.deb \
+    && dpkg -i couchbase-sync-gateway-community_1.0.0_x86_64.deb \
+    && dpkg -i couchbase-release-1.0-2-amd64.deb \
+    && apt-get update \
+    && apt-get install -y libcouchbase-dev libcouchbase2-bin build-essential 
+RUN cd /opt/ \
+    && wget https://codeload.github.com/couchbase/php-couchbase/zip/master \ 
+    && mv /opt/master /opt/master.zip \
+    && unzip master.zip \    
+    && mv /opt/php-couchbase-master /opt/php-couchbase \
+    && cd /opt/php-couchbase \
+    && phpize \
+    && ./configure --with-couchbase \
+    && make \
+    && make install
+RUN touch /etc/php5/apache2/conf.d/30-couchbase.ini \
+     && echo "extension = /usr/lib/php5/20121212/couchbase.so" > /etc/php5/apache2/conf.d/30-couchbase.ini    
+     && echo "extension=couchbase.so" >> /etc/php5/apache2/php.ini
+     && echo "extension=json.so" >> /etc/php5/apache2/php.ini
+    
+ENV APACHE_RUN_USER www-data
+ENV APACHE_RUN_GROUP   www-data
+ENV APACHE_LOG_DIR  /var/log/apache2
+ENV APACHE_LOCK_DIR /var/lock/apache2
+ENV APACHE_PID_FILE /var/run/apache2.pid
+
+EXPOSE 80 22 443 8091 8092 8093 8094 11207 11210 11211 18091 18092 18093 18094 4984 4985 25
+
+CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]

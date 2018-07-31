@@ -1,0 +1,14 @@
+(1) Create a new template from a snapshot on XenServer:
+> xe snapshot-list , get the snapshot uuid 
+> xe snapshot-export-to-template snapshot-uuid=<from 1st command> filename=<give the name you want to>  preserve-power-state=true/false 
+true > to preserve MAC address details
+false > not to preserve MAC address details
+
+(2) How to take and restore VM snapshot using command line on XenServer 
+#xe vm-list
+# xe vm-snapshot new-name-label="Debian Jessie 8.5-Snapshot" vm=7371124f-7d4d-66b7-cbc7-a98b1457543e
+f100447b-09a0-7b4c-31c9-36b970ecc9dd
+# xe snapshot-list name-label="Debian Jessie 8.5-Snapshot"
+
+(3) Restore from snapshot:
+# xe snapshot-revert snapshot-uuid=f100447b-09a0-7b4c-31c9-36b970ecc9dd

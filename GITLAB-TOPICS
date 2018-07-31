@@ -1,0 +1,7 @@
+(1)			HOW TO RESET YOUR ROOT PASSWORD OF GITLAB:
+#gitlab-rails console production
+#user = User.where(id: 1).first
+#user.password = 'secret_pass'
+#user.password_confirmation = 'secret_pass'
+#user.save!
+

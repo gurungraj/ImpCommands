@@ -1,0 +1,574 @@
+(A) How To Set Up Master Slave Replication in MySQL
+
+(1)IN MASTER:
+
+(i) vi /etc/mysql/mysql
+
+bind-address            = <ip of master server> 
+server-id               = 1
+log_bin                 = /var/log/mysql/mysql-bin.log
+binlog_do_db            = drupal
+
+(ii) service mysql restart
+
+(iii)GRANT REPLICATION SLAVE ON *.* TO 'gai'@'%' IDENTIFIED BY 'gai123';
+(iv) FLUSH PRIVILEGES;
+(v) Keep Open this tab
+
+(ii)OPEN OTHER TAB:
+    x-x-x-x-x-x-x-x-
+     RUN:
+     USE drupal;
+     FLUSH TABLES WITH READ LOCK;
+     SHOW MASTER STATUS;
+
+ (iii)    mysqldump -u root -p --opt newdatabase > newdatabase.sql
+
+(iv) GO TO ORIGINAL TAB:
+     -x-x-x-x-x-x-x-
+
+    UNLOCK TABLES;
+    QUITS;
+
+(2)
+  ON SLAVE MACHINE:
+-X-x-x-x-x-x-x-x-x-
+(i) create database drupal;
+(ii)mysql -u root -p newdatabase < /path/to/newdatabase.sql
+
+(iii)vi /etc/mysql/mysql.d/mysqld.conf
+	server-id               = 2
+	relay-log               = /var/log/mysql/mysql-relay-bin.log
+	log_bin                 = /var/log/mysql/mysql-bin.log
+	binlog_do_db            = drupal
+
+(iv) service mysql restart
+
+(v)   CHANGE MASTER TO MASTER_HOST='172.17.0.2',MASTER_USER='replicator', MASTER_PASSWORD='password', MASTER_LOG_FILE='mysql-bin.000001', MASTER_LOG_POS=  154;
+(vi)  START SLAVE;
+(vii) CREATE TABLE animals (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE, death DATE);
+
+(B) How To Set Up MySQL Master-Master Replication
+*Note: Don't create any database otherwise replication will not work
+
+(1) ON FIRST MASTER-SERVER
+
+server-id               = 1
+log_bin                 = /var/log/mysql/mysql-bin.log
+binlog_do_db            = drupal
+# bind-address            = 127.0.0.1
+
+service mysql restart
+create user 'replicator'@'%' identified by 'password'; 
+grant replication slave on *.* to 'replicator'@'%'; 
+show master status; 
+
+(2) ON SECOND MASTER-SERVER:
+(i) vi /etc/mysql/my.cnf
+server-id              = 2
+log_bin                = /var/log/mysql/mysql-bin.log
+binlog_do_db           = example
+# bind-address            = 127.0.0.1
+
+create user 'replicator'@'%' identified by 'password'; 
+create database drupal;
+grant replication slave on *.* to 'replicator'@'%'; 
+stop slave; 
+CHANGE MASTER TO MASTER_HOST = '172.17.0.2', MASTER_USER = 'replicator', MASTER_PASSWORD = 'password', MASTER_LOG_FILE = 'mysql-bin.000001', MASTER_LOG_POS = 955;
+Start slave;
+SHOW MASTER STATUS; 
+
+(3) BACK TO FIRST MASTER-SERVER:
+ slave stop; 
+CHANGE MASTER TO MASTER_HOST = '172.17.0.3', MASTER_USER = 'replicator', MASTER_PASSWORD = 'password', MASTER_LOG_FILE = 'mysql-bin.000001', MASTER_LOG_POS = 607; 
+slave start; 
+
+create database drupal;
+CREATE TABLE animals (name VARCHAR(20), owner VARCHAR(20), species VARCHAR(20), sex CHAR(1), birth DATE, death DATE);
+(4) Check for database in master02;
+
+=======================================================================================
+
+SSMTP CONFIGURATION:
+
+# Config file for sSMTP sendmail
+#
+# The person who gets all mail for userids < 1000
+# Make this empty to disable rewriting.
+#root=postmaster
+root=MyEmailAddress@gmail.com
+
+# The place where the mail goes. The actual machine name is required no
+# MX records are consulted. Commonly mailhosts are named mail.domain.com
+#mailhub=mail
+mailhub=smtp.gmail.com:587
+
+AuthUser=MyEmailAddress@gmail.com
+AuthPass=MyPassword
+UseTLS=YES
+UseSTARTTLS=YES
+
+# Where will the mail seem to come from?
+#rewriteDomain=
+rewriteDomain=gmail.com
+
+# The full hostname
+#hostname=MyMediaServer.home
+hostname=MyMediaServer.home
+
+# Are users allowed to set their own From: address?
+# YES - Allow the user to specify their own From: address
+# NO - Use the system generated From: address
+FromLineOverride=YES
+
+----------------------------------------------------------
+
+RUNNING COMMAND AS SPECIFIED USER FROM ROOT:
+
+(i) sudo -H -u otheruser bash -c 'echo "I am $USER, with uid $UID"' 
+(ii) su - <username> -c "<commands>"
+
+(iii) Suppose you want user smith to be able to run a given command as user jones.
+
+     vi /etc/sudoers:
+Add this line => smith  ALL = (jones) /usr/local/bin/mycommand
+
+
+
+------------------------------------------
+CREATE TABLE drupal.data (id INTEGER NOT NULL AUTO_INCREMENT, value CHAR(30), count INTEGER, PRIMARY KEY (value), KEY (id));
+INSERT INTO data (value, count) VALUES ( '$value', 1 ) ON DUPLICATE KEY UPDATE count=count+1;
+
+
+scp login.js kuddel@52.62.34.26:/var/www/sites/kuddelmuddel.io/current/wp-content/themes/bridge/templates/js/
+===========================================
+
+DRUSH IN JAILKIT:
+(1) vi /etc/jailkit/jk_init.ini 
+php]
+comment = the PHP interpreter and libraries
+executables = /usr/bin/php5, /usr/bin/php
+directories = /usr/lib/php5, /usr/share/php, /usr/share/php5, /etc/php5, /usr/share/php-geshi, [B]/usr/share/zoneinfo[/B]
+includesections = env
+
+[env]
+comment = environment variables
+executables = /usr/bin/env
+
+[mysql-client]
+comment = mysql client
+executables = /usr/bin/mysql
+paths = /usr/lib/x86_64-linux-gnu/libmysqlclient.so.18
+
+[drush]
+comment = drush (drupal command line)
+includesections = php, mysql-client, uidbasics, netbasics
+directories = /usr/share/zoneinfo, /etc/ssl/certs, /usr/share/ca-certificates
+
+(2) jk_init -v -c /etc/jailkit/jk_init.ini -f -k -j /absolute/path/to/jail/ drush
+
+(3) Create tmp directory and give chmod 777 and chmod o+t <tmp> <Sticky bit>
+(4) git config --global core.editor vim
+=========================================================================================================
+
+502 ERROR:
+
+vi /etc/php-fpm.d/www.conf
+
+request_terminate_timeout = 3600s
+=======================================================================
+
+NGINX-LOADBALANCER:
+
+user  nginx;
+worker_processes  1;
+
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+stream {
+        upstream stream_backend {
+            least_conn;
+            server 172.17.0.34:3306 max_fails=2 fail_timeout=30s;
+            #server backend2.example.com:12345 max_fails=2 fail_timeout=30s;
+            #server backend3.example.com:12346 max_conns=3;
+        }
+match mysql_handshake {
+    send \x00;
+    expect ~* \x00\x00; # NullNull "filler" in handshake response packet
+}        
+
+        server {
+            listen 3306;
+            proxy_connect_timeout 1s;
+            proxy_timeout 3s;
+            health_check match=mysql_handshake interval=20 fails=1 passes=2;
+            proxy_pass stream_backend;
+        }
+}
+
+CHECKING LOADBALANCER IS WORKING:
+echo "SHOW VARIABLES WHERE Variable_name = 'hostname'" | mysql --protocol=tcp --user=root --password=root -h 172.17.0.2 -N 2> /dev/null
+==========================================================================================
+
+How do I make Git ignore file mode (chmod) changes? :
+git config core.fileMode false
+
+================================
+HOW TO CREATE NETWORK, GIVE SPECIFIC SUBNET AND ATTACHED TO CONTAINER:
+
+docker network create --driver=bridge --subnet=172.28.0.0/16 --ip-range=172.28.5.0/24 --gateway=172.28.5.254 <Any name> 
+docker run -d --network=<name>  <docker image>
+
+MULTIPLE DOCKER NETWORKS:
+
+#docker network list
+#docker network connect <network name> <running docker conatiner>
+
+SPECIFY THE IP ADDRESS A CONTAINER WILL USE ON A GIVEN NETWORK:
+#$ docker network connect --ip 10.10.36.122 multi-host-network container2
+
+Use the legacy --link option:
+$ docker network connect --link container1:c1 multi-host-network container2
+
+Create a network alias for a container:
+#docker network connect --alias db --alias mysql multi-host-network container2
+
+Preventing the IP address is not given to another container while this container is not on the network:
+#$ docker network create --subnet 172.20.0.0/16 --ip-range 172.20.240.0/20 multi-host-network
+#$ docker network connect --ip 172.20.128.2 multi-host-network container2
+
+Start containers automatically:
+#docker run -dit --restart always <>   Always restart the container if it stops.
+#docker run -dit --restart unless-stopped redis     Restart the container unless it is explicitly stopped or Docker itself is stopped or restarted.
+
+CONNECTING DOCKER CONTAINERS IN DIFFERENT NETWORKS(SWARM):
+#docker network create -d overlay overnet
+#docker service create --name myservice --network overnet --replicas 2 alpine sleep 1d
+
+DOCKER SWARM:
+#docker swarm init --advertise-addr
+
+=========================================
+ENABLING NON-ROOT USERS TO RESTART DOCKER :
+
+swami ALL=(ALL) NOPASSWD: /usr/sbin/service docker restart
+
+Hosting some simple static content in NGINX:
+#docker run --name my-custom-nginx-container -v /host/path/nginx.conf:/etc/nginx/nginx.conf:ro -d nginx
+#docker run --name my-nginx -v /host/path/nginx.conf:/etc/nginx/nginx.conf:ro -d nginx
+
+====================================
+DOCKER NSPECT:
+docker inspect <id> | egrep '"IPAddress":[^,]+'
+
+---------------------------------------------------------------
+CHECKING DOCKER IMAGES:
+docker images | awk '{print $1 $2}'
+
+==========================================
+PRINT DOCKER PORT USED WITH CONTAINER NAME:
+#docker ps | awk '{print $13"  "$12}'
+docker ps | grep -Is wordpress_wordpress_ | awk '{print $11}'
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_name>
+=======================================
+
+
+HOW TO STOP AND REMOVE CONTAINRES:
+docker ps | cut -d ' ' -f1 | xargs docker stop
+docker ps -a | grep Exit | cut -d ' ' -f1| xargs docker rm
+
+===================================================
+CANNOT ADD OR UPDATE A CHILD ROW: A FOREIGN KEY CONSTRAINT FAILS:
+SET FOREIGN_KEY_CHECKS=0
+THen Change to
+SET FOREIGN_KEY_CHECKS=1
+
+==========================
+HOW TO MOVE ORANGEHRM TO OTHER SERVER
+Delete cache file
+path: …\symfony\cache\orangehrm\prod\config\config_autoload.yml
+Go to /symfony folder, type this code (Linux server. Or in windows, you have to specify the path to php.exe)
+#$php symfony cc
+
+================================================================
+
+HOW TO REPACE STRING IN COLUMN USING VIM
+
+http://www.idgnews.in/content/Attero-E-waste Recycling # http://www.idgnews.in/content/Attero-E-waste Recycling
+:1,68 s/\%1chttp:\/\/www.idgnews.in/http:\/\/stage-idgnews.gailabs.com/
+
+=================================================================
+
+REFORMAT IN VIM FOR A NICE COLUMN LAYOUT
+#:%!column -t
+
+=====================================================
+CONVERT SELECTION TO LOWERCASE (OR UPPERCASE) IN SUBLIME TEXT?:
+ctrl +ku
+
+====================================================
+PERMANENTLY AUTHENTICATING WITH GIT REPOSITORIES:
+$ git config credential.helper store
+$ git push https://github.com/repo.git
+
+Username for 'https://github.com': <USERNAME>
+Password for 'https://USERNAME@github.com': <PASSWORD>
+
+==========================================================
+GIT STATUS FROM OUTSIDE OF THE WORKING DIRECTORY:
+git --git-dir=the/local/repo/.git --work-tree=the/local/repo status
+
+===================================================
+UPDATING NODEJS ON UBUNTU 16.04:
+npm install -g n
+sudo n latest
+npm i -g npm
+
+======================================
+HOW TO MERGE TWO FILES LINE BY LINE IN BASH
+paste file1.txt file2.txt > fileresults.txt
+fileresult.txt
+--------------
+linef11     linef21
+linef12     linef22
+linef13     linef23
+
+===========================================
+REPLACE THE FIRST CHARACTER OF EACH LINE
+/content/enclosure-and-rack-systems
+#:%s/^[/]//
+o/p=> content/enclosure-and-rack-systems
+
+=============================================
+HOW CAN I ADD A STRING TO THE END OF EACH LINE IN VIM?:
+:%s/$/[R=301]/g
+============================================
+ HOW TO INSERT TEXT BEFORE THE FIRST LINE OF A FILE?:
+ /content/enclosure-and-rack-systems
+ #%s/RedirectRule / 
+ RedirectRule /content/enclosure-and-rack-systems
+=========================================
+LIST OF DATABASES:
+mysql -u root -p -h -e "SHOW DATABASES" | awk '{print $1}'
+
+===============================================
+EXTRACT THE CHARACTERS BEFORE () USING GREP:
+rose(good)ook
+#sed 's/(.*//' file
+O/P=> rose
+#cut -d \( -f 1 file
+====================================
+HOW TO CHECK FOR DUPLICATE WORDS IN FILE :
+
+#grep -wo '[[:alnum:]]\+' /tmp/2.txt | sort | uniq -cd | awk '{print $2}'
+
+==============================================
+
+(1)         HOW TO RESET YOUR ROOT PASSWORD OF GITLAB:
+#gitlab-rails console production
+#user = User.where(id: 1).first
+#user.password = 'secret_pass'
+#user.password_confirmation = 'secret_pass'
+#user.save!
+
+
+(2)         RUN DRUSH FROM ANY DIRECTORY WITH SITE ALIASES:
+
+#drush cc all --root=/var/www/example
+#drush @ex cd all
+#vi ex.alias.drushrc.php
+   
+    <?php 
+    /**
+     * @file
+     * Site alias for example.com
+     */
+    $aliases['ex'] = array(
+      'root' => '/var/www/example',
+      'uri' => 'vm.example.com',
+    );
+
+
+(3)       HOW TO USE BASH $(AWK) IN SINGLE SSH-COMMAND?
+
+   # ssh myServer "uname -a | awk '{print \$2}' "
+
+
+(4)       USING OUTPUT OF AWK TO RUN COMMAND
+
+  # awk '{ system("openssl s_client -connect host:port -cipher " $1) }' ciphers.txt
+  # awk '{ system("mkdir " $1) }' ciphers.txt
+  
+
+(5)  How do I make Git ignore file mode (chmod) changes?
+
+      #git config core.fileMode false  
+      
+
+(6) Rsync over SSH with key authentication 
+    #rsync --progress -avz -e "ssh -i /home/dev/.ssh/andy-rsync-key" /home/dev/git-master/       
+
+(7) #/mnt/gluster/files/cascade/prod/mema.org/htdocs/sites/mera.org
+    #/mnt/gluster/files/cascade/prod/mema.org/htdocs/sites
+
+(8)
+    
+
+you have to set the username and the keyfile in the rsyncopts part of lsyncd.conf file (on ubuntu it is /etc/lsyncd/lsyncd.conf.lua). The keyfile must be present on the host where the lsyncd daemon is running.
+
+sync{
+  default.rsyncssh,
+  source="/path/to/source",
+  host="target.example.org",
+  targetdir="/path/on/target",
+  rsyncOpts={"-e", "/usr/bin/ssh -l someuser123 -i /home/someuser123/.ssh/id_rsa"}
+}
+
+(9) RSYNC from remote to local excluding folders:
+    #rsync -avr -e ssh user@host:/home/path/to/copy \
+                 /home/user/www --exclude='files_to_exclude/*'
+
+(10)                  
+===========================================================================
+(1)-XEN-TOPICS:
+console exit
+#Ctrl+] 
+
+(2)-Delete Rule by Chain and Number:
+#iptables -L --line-numbers
+#ptables -D <INPUT> 3 (Chain Rule: INPUT , FORWARD, PRE,POST)
+
+(3)-Flush a Single Chain
+#iptables -F INPUT
+iptables-save > iptables.txt`, removing the unwanted lines, and then applying the updated rules list via `iptables-restore < iptables.txt`.
+
+
+(4)-up route add -net <192.168.100.104 or 188.40.103.64> netmask <255.255.255.0 or 255.255.255.192> gw <192.168.100.1 or 188.40.103.65> eth0
+xen-create-image --hostname=testvm --ip=<your additional ip> --vcpus=<any> --memory=<any> --swap=<512Mb> --size=<any Gb> --arch=<i386 or amd64>
+up route add -net 192.168.100.104 netmask 255.255.255.0 gw 192.168.100.1 eth0
+#xen-create-image --hostname=couchbase--ip=192.168.122.50 --vcpus=1 --memory=1024Mb --swap=512Mb --size=10Gb --arch=amd64
+
+
+Highlighting search matches:
+:set hlsearch
+:set nohlsearch
+
+
+docker run -i -t -p 8080:80 mysite /bin/bash
+apachectl start
+
+MYSQL-TOPICS:
+mysqlcheck -uroot -p --optimize --databases myDatabase
+mysqladmin -u root -p -i 1 processlist
+mysqldump -u user -pupasswd my-database | gzip > one.gz > two.gz > three.gz
+$MYSQL -u$MYSQL_USER -p$MYSQL_PASSWORD -e "SHOW DATABASES;" | grep -Ev "(Database|information_schema)"
+
+Securely Transfer Files via rsync and SSH:
+rsync -avhe ssh user@server:/path/to/file /home/user/path/to/file
+rsync -avhPe "ssh -pPORTNUMBER" user@server:/path/to/file /home/user/path/to/file
+
+CHECK APACHE CONNECTIONS:
+netstat -tuna | grep :80 | grep SYN_RECV
+
+NOW=$(date +"%Y-%m-%d")
+
+COPY FOLDER&HIDDEN FILES :
+scp -pr 
+
+FIND TOPICS:
+(1)-HOW TO FIND PARTICULAR STRING"/var/www/html/abc.org" in /etc/apache2/sites-available and replcae abc.org to abc:
+#grep -lr -e "/var/www/html/abc.org" . | xargs sed -i "s/var\/www\/html\/abc.org/var\/www\/html\/abc/g"
+
+HOW TO FIND OLDER FILES AND THEN REMOVE:
+find /path/* -mtime +30 -exec rm {} \;
+
+HOW TO CHNAGE TIME IN UBUNTU:
+dpkg-reconfigure tzdata
+
+CHECKING USER CONNECTIVITY IN LDAP:
+#ldapsearch -LLL -x -h ldap.gailabs.com -D 'cn=admin,dc=ldap,dc=gailabs,dc=com' -b dc=ldap,dc=gailabs,dc=com -w gai123
+#ldapadd -x -W -h ldap.gailabs.com -D "cn=admin,dc=ldap,dc=gailabs,dc=com" -f user.ldif 
+
+JAILKIT USER:
+jk_jailuser -m -j /opt/jail/ robber
+
+HOW TO REMOVE EXITED DOCKER:
+docker ps -a | grep Exit | cut -d ' ' -f 1 | xargs docker rm
+
+CHECK DIRECTORY EXIST IN BASH SCRIPT:
+if [ ! -d /home/mlzboy/b2c2/shared/db ]; then
+  mkdir -p /home/mlzboy/b2c2/shared/db;
+fi
+
+CHANGING DATE STAMP IN UBUNTU:
+find bfc/. -exec touch -d "90 days ago" {} +
+
+SEARCH AND REPLACE WHOLE LINE USING sed:
+sed -i '/TEXT_TO_BE_REPLACED/c\This line is removed by the admin.' /tmp/foo
+sed 's/^aaa=.*/aaa=xxx/'
+cat text.txt | tr -s ' ' | cut -d ' ' -f4
+cat /etc/hosts|grep 172.0|awk '{print $4}'
+
+find DIRECTORY -exec touch -d "2 hours ago" {} +
+
+CURL ERROR undeined cur_inti():
+#apt-get install php5-curl
+
+SPACING IN BASH SCRIPT:
+echo -e "helloworld\n"
+
+WRITING IMAGE ON RPI:
+ddrescue -D --force ubuntu-mate-16.04-desktop-armhf-raspberry-pi.img /dev/sdc
+
+CRON NOT RUNNING FROM UI : DRUPAL
+add => extension=php_curl.so in /etc/php5/apache2/php.ini
+
+How do I sudo without having to enter my password?:
+#visudo -f /etc/sudoers.d/90-cloudimg-ubuntu
+michael ALL=NOPASSWD: ALL
+
+MYSQL-NON-ROOT USER CREATE DATABASE:
+#GRANT ALL PRIVILEGES ON `testuser\_%` .  * TO 'testuser'@'%';
+
+GIT-STATUS IN OTHER DIRECTORY:
+#git --git-dir /foo/bar/.git log
+
+HOW TO GET THE CURRENT GIT BRANCH:
+#git rev-parse --abbrev-ref HEAD
+
+SENDING MAIL FROM MUTT:
+#mail -A woxgo_analytics_extract.gz -s "Test Mail 3" rajesh.g@gai.co.in </tmp/1.txt 
+
+RSYNC OVER SSH ON NON-STANDAR PORT:
+# rsync -avz -e "ssh -p $portNumber" user@remoteip:/path/to/files/ /local/path/
+STANDARD-PORT:
+#rsync -avHe ssh user@server:/path/to/file /home/user/path/to/file
+
+RECONFIGURE DATE IN UBUNTU:
+#sudo dpkg-reconfigure tzdata
+SAMBA-SHARING:
+[<folder_name>]
+path = /home/<user_name>/<folder_name>
+valid users = <user_name>
+read only = no
+
+AUTO-START AND STOP XEN GUEST:
+xe vm-param-set uuid=<vm uuid> other-config:auto_poweron=false <true>
++++++++++++++++++++++++++++++++++++++++++++++
+How do I change the screen resolution using Ubuntu command line?:
+#xrandr --output LVDS --mode 1024x768
+#xrandr -q
++++++++++++++++
+How to tar a directory preserving not only permissions, but ownership too:
+#tar -cvpf file.tar
+#tar --same-owner -xvf file.tar
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+How to do backup with rsync and keep a copy of modified files?
+rsync -avzrb --progress --backup-dir=/tmp/old_dir/ --suffix=$(date +%F-%T) --update --times /tmp/source/ /tmp/target/
