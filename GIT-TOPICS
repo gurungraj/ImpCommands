@@ -1,6 +1,13 @@
 (1) Ignore modified (but not committed) files in git?
-#git update-index --skip-worktree
+	#git update-index --skip-worktree
+
 
 (2) How do I make Git ignore file mode (chmod) changes?
 
-      #git config core.fileMode false  
+      	#git config core.fileMode false  
+
+(3) PERMANENTLY AUTHENTICATING WITH GIT REPOSITORIES:
+	$ git config credential.helper store
+	$ git push https://github.com/repo.git
+	Username for 'https://github.com': <USERNAME>
+	Password for 'https://USERNAME@github.com': <PASSWORD>
