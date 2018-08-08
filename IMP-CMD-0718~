@@ -582,7 +582,7 @@ myusername ALL = (root) NOPASSWD: /path/to/my/program
 ======================================================
 Remove sudo privileges from a user (without deleting the user):
 
-#deluser USERNAME sudo
+adduser username sudo
 
 
 

@@ -1,0 +1,54 @@
+vi /etc/mysql/mysql.conf.d/mysqld.cnf 
+datadir=/mnt/volume-nyc1-01/mysql
+
+vi /etc/apparmor.d/tunables/alias
+alias /var/lib/mysql/ -> /mnt/volume-nyc1-01/mysql/,
+
+/etc/init.d/apparmor restart
+-------------------------------------------------
+MySQL Server has gone away when importing large sql file:
+[mysqld]
+wait_timeout = 600
+max_allowed_packet = 64M
+
+SET GLOBAL max_allowed_packet=1073741824;
+------------------------------------------------
+Query to count the number of tables I have in MySQL:
+mysql> SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'dbName';
+
+--------------------------------------
+How to get size of mysql database?
+SELECT table_schema "DB Name",
+        ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) "DB Size in MB" 
+FROM information_schema.tables 
+GROUP BY table_schema; 
+
+
+SELECT table_schema "Data Base Name",
+sum( data_length + index_length ) / 1024 /
+1024 "Data Base Size in MB",
+sum( data_free )/ 1024 / 1024 "Free Space in MB"
+FROM information_schema.TABLES
+GROUP BY table_schema ; 
+
+SELECT TABLE_NAME AS `Table`,
+  ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024) AS `Size (MB)`
+FROM
+  information_schema.TABLES
+WHERE
+  TABLE_SCHEMA = "bookstore"
+ORDER BY
+  (DATA_LENGTH + INDEX_LENGTH)
+DESC;
+------------------------------------------
+Finding out largest tables on MySQL Server:
+
+SELECT CONCAT(table_schema, '.', table_name),
+       CONCAT(ROUND(table_rows / 1000000, 2), 'M')                                    rows,
+       CONCAT(ROUND(data_length / ( 1024 * 1024 * 1024 ), 2), 'G')                    DATA,
+       CONCAT(ROUND(index_length / ( 1024 * 1024 * 1024 ), 2), 'G')                   idx,
+       CONCAT(ROUND(( data_length + index_length ) / ( 1024 * 1024 * 1024 ), 2), 'G') total_size,
+       ROUND(index_length / data_length, 2)                                           idxfrac
+FROM   information_schema.TABLES
+ORDER  BY data_length + index_length DESC
+LIMIT  10;

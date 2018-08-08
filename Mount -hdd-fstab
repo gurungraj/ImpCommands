@@ -1,0 +1,2 @@
+vi /etc/fstab
+dev/sdb1    /home/yourname/mydata    ext4    defaults    0    1

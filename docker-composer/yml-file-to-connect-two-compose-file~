@@ -1,0 +1,49 @@
+/database/docker-compose 
+
+#version: '3.3'
+version: '2'
+
+services:
+  db:
+     image: mysql57:vim
+     volumes:
+       - ./db_data:/var/lib/mysql
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: wp
+       MYSQL_DATABASE: wp
+       MYSQL_USER: wp
+       MYSQL_PASSWORD: wp
+     networks:
+      # - wp
+       - dbserver
+networks:
+    dbserver:
+        ipam:
+            driver: default
+            config:
+                - subnet: 172.21.0.0/16
+===========================================
+/webservice/docker-compose.yml
+
+#version: '3.3'
+version: '2'
+
+services:
+   web01:
+      image: wordpress
+    # volumes:
+    #   - /home/success/xcelonz:/var/www/html
+      external_links:
+          - db
+      ports:
+       - "8000:80"
+      restart: always
+      #networks:
+      # - wp
+      # - test02_dbserver 
+networks:
+    default:
+        external:
+            name: test02_dbserver
+

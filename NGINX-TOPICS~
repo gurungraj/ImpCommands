@@ -1,0 +1,3 @@
+Nginx: 413 – Request Entity Too Large Error and Solution:
+vi /usr/local/nginx/conf/nginx.conf
+client_max_body_size 2M;

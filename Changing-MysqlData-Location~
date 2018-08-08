@@ -5,3 +5,10 @@ vi /etc/apparmor.d/tunables/alias
 alias /var/lib/mysql/ -> /mnt/volume-nyc1-01/mysql/,
 
 /etc/init.d/apparmor restart
+
+MySQL Server has gone away when importing large sql file:
+[mysqld]
+wait_timeout = 600
+max_allowed_packet = 64M
+
+SET GLOBAL max_allowed_packet=1073741824;
